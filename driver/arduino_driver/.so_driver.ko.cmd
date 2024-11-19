@@ -1,1 +1,0 @@
-savedcmd_/home/gomgom/CE-4303-Proyecto2/driver/arduino_driver/so_driver.ko := ld -r -m elf_x86_64 -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T scripts/module.lds -o /home/gomgom/CE-4303-Proyecto2/driver/arduino_driver/so_driver.ko /home/gomgom/CE-4303-Proyecto2/driver/arduino_driver/so_driver.o /home/gomgom/CE-4303-Proyecto2/driver/arduino_driver/so_driver.mod.o
