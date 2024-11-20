@@ -7,7 +7,6 @@
 // Buffer para transferencias
 #define USB_BUFFER_SIZE 8
 static char device_buffer[USB_BUFFER_SIZE];
-static size_t buffer_size = 0;
 
 // Tabla de dispositivos soportados
 static struct usb_device_id usb_ids[] = {

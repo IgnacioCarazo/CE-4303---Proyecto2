@@ -54,3 +54,26 @@ int arduino_read(char *buffer, size_t size) {
     close(fd);
     return bytes_read; // Return the number of bytes read
 }
+
+int moveRight() {
+    const char *message = "@1180";  // Corresponds to move right
+    return arduino_write(message, strlen(message));
+}
+
+// Move left
+int moveLeft() {
+    const char *message = "@11";    // Corresponds to move left
+    return arduino_write(message, strlen(message));
+}
+
+// Move up
+int moveUp() {
+    const char *message = "@290";   // Corresponds to move up
+    return arduino_write(message, strlen(message));
+}
+
+// Move down
+int moveDown() {
+    const char *message = "@21";    // Corresponds to move down
+    return arduino_write(message, strlen(message));
+}
