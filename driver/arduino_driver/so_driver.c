@@ -5,7 +5,7 @@
 #include <linux/usb.h>
 
 // Buffer para transferencias
-#define USB_BUFFER_SIZE 64
+#define USB_BUFFER_SIZE 8
 static char device_buffer[USB_BUFFER_SIZE];
 static size_t buffer_size = 0;
 
@@ -31,22 +31,22 @@ static ssize_t driver_read(struct file *file, char __user *user_buffer, size_t c
     int actual_length;
 
     if (!arduino_dev) {
-        printk(KERN_ERR "No Arduino device connected.\n");
+        printk(KERN_ERR "SO Driver - No Arduino device connected.\n");
         return -ENODEV;
     }
 
-    printk(KERN_INFO "Reading data from Arduino...\n");
+    printk(KERN_INFO "SO Driver - Reading data from Arduino...\n");
 
     retval = usb_bulk_msg(arduino_dev->udev,
                           usb_rcvbulkpipe(arduino_dev->udev, arduino_dev->bulk_in_endpointAddr),
                           device_buffer, USB_BUFFER_SIZE, &actual_length, 5000);
 
     if (retval) {
-        printk(KERN_ERR "Failed to read data from Arduino. Error %d\n", retval);
+        printk(KERN_ERR "SO Driver - Failed to read data from Arduino. Error %d\n", retval);
         return retval;
     }
 
-    printk(KERN_INFO "Read %d bytes from Arduino.\n", actual_length);
+    printk(KERN_INFO "SO Driver - Read %d bytes from Arduino.\n", actual_length);
 
     if (copy_to_user(user_buffer, device_buffer, actual_length)) {
         return -EFAULT;
@@ -61,11 +61,11 @@ static ssize_t driver_write(struct file *file, const char __user *user_buffer, s
     int actual_length;
 
     if (!arduino_dev) {
-        printk(KERN_ERR "No Arduino device connected.\n");
+        printk(KERN_ERR "SO Driver - No Arduino device connected.\n");
         return -ENODEV;
     }
 
-    printk(KERN_INFO "Writing %zu bytes to Arduino...\n", count);
+    printk(KERN_INFO "SO Driver - Writing %zu bytes to Arduino...\n", count);
 
     if (copy_from_user(device_buffer, user_buffer, count)) {
         return -EFAULT;
@@ -76,18 +76,18 @@ static ssize_t driver_write(struct file *file, const char __user *user_buffer, s
                           device_buffer, count, &actual_length, 5000);
 
     if (retval) {
-        printk(KERN_ERR "Failed to send data to Arduino. Error %d\n", retval);
+        printk(KERN_ERR "SO Driver - Failed to send data to Arduino. Error %d\n", retval);
         return retval;
     }
 
-    printk(KERN_INFO "Sent %d bytes to Arduino.\n", actual_length);
+    printk(KERN_INFO "SO Driver - Sent %d bytes to Arduino.\n", actual_length);
 
     return actual_length;
 }
 
 // Función de detección del dispositivo
 static int arduino_probe(struct usb_interface *interface, const struct usb_device_id *id) {
-    printk(KERN_INFO "Arduino device connected: VendorID=0x%x, ProductID=0x%x\n",
+    printk(KERN_INFO "SO Driver - Arduino device connected: VendorID=0x%x, ProductID=0x%x\n",
            id->idVendor, id->idProduct);
 
     struct usb_host_interface *iface_desc;
@@ -96,7 +96,7 @@ static int arduino_probe(struct usb_interface *interface, const struct usb_devic
 
     arduino_dev = kzalloc(sizeof(struct usb_arduino), GFP_KERNEL);
     if (!arduino_dev) {
-        printk(KERN_ERR "Cannot allocate memory for Arduino device.\n");
+        printk(KERN_ERR "SO Driver - Cannot allocate memory for Arduino device.\n");
         return -ENOMEM;
     }
 
@@ -107,26 +107,26 @@ static int arduino_probe(struct usb_interface *interface, const struct usb_devic
     for (i = 0; i < iface_desc->desc.bNumEndpoints; ++i) {
         endpoint = &iface_desc->endpoint[i].desc;
 
-        printk(KERN_INFO "Endpoint %d: 0x%x, Direction: %s\n", i, endpoint->bEndpointAddress, 
+        printk(KERN_INFO "SO Driver - Endpoint %d: 0x%x, Direction: %s\n", i, endpoint->bEndpointAddress, 
                usb_endpoint_is_bulk_in(endpoint) ? "IN" : usb_endpoint_is_bulk_out(endpoint) ? "OUT" : "OTHER");
 
         if (usb_endpoint_is_bulk_in(endpoint)) {
             arduino_dev->bulk_in_endpointAddr = endpoint->bEndpointAddress;
-            printk(KERN_INFO "Bulk IN endpoint found: 0x%x\n", arduino_dev->bulk_in_endpointAddr);
+            printk(KERN_INFO "SO Driver - Bulk IN endpoint found: 0x%x\n", arduino_dev->bulk_in_endpointAddr);
         } else if (usb_endpoint_is_bulk_out(endpoint)) {
             arduino_dev->bulk_out_endpointAddr = endpoint->bEndpointAddress;
-            printk(KERN_INFO "Bulk OUT endpoint found: 0x%x\n", arduino_dev->bulk_out_endpointAddr);
+            printk(KERN_INFO "SO Driver - Bulk OUT endpoint found: 0x%x\n", arduino_dev->bulk_out_endpointAddr);
         }
     }
 
     if (!(arduino_dev->bulk_in_endpointAddr && arduino_dev->bulk_out_endpointAddr)) {
-        printk(KERN_ERR "Could not find bulk endpoints. IN: 0x%x, OUT: 0x%x\n", 
+        printk(KERN_ERR "SO Driver - Could not find bulk endpoints. IN: 0x%x, OUT: 0x%x\n", 
                arduino_dev->bulk_in_endpointAddr, arduino_dev->bulk_out_endpointAddr);
         kfree(arduino_dev);
         return -ENODEV;
     }
 
-    printk(KERN_INFO "Arduino device connected successfully.\n");
+    printk(KERN_INFO "SO Driver - Arduino device connected successfully.\n");
     return 0;
 }
 
@@ -137,7 +137,7 @@ static void arduino_disconnect(struct usb_interface *interface) {
         usb_put_dev(arduino_dev->udev);
         kfree(arduino_dev);
         arduino_dev = NULL;
-        printk(KERN_INFO "Arduino device disconnected.\n");
+        printk(KERN_INFO "SO Driver - Arduino device disconnected.\n");
     }
 }
 
@@ -159,29 +159,29 @@ static struct file_operations fops = {
 static int __init myInitModule(void) {
     int retval;
 
-    printk(KERN_INFO "Loading Arduino USB driver...\n");
+    printk(KERN_INFO "SO Driver - Loading Arduino USB driver...\n");
 
     retval = register_chrdev(MYMAJOR, "arduino_driver", &fops);
     if (retval) {
-        printk(KERN_ERR "Failed to register character device.\n");
+        printk(KERN_ERR "SO Driver - Failed to register character device.\n");
         return retval;
     }
 
     retval = usb_register(&arduino_driver);
     if (retval) {
         unregister_chrdev(MYMAJOR, "arduino_driver");
-        printk(KERN_ERR "Failed to register USB driver.\n");
+        printk(KERN_ERR "SO Driver - Failed to register USB driver.\n");
         return retval;
     }
 
-    printk(KERN_INFO "Arduino USB driver loaded successfully.\n");
+    printk(KERN_INFO "SO Driver - Arduino USB driver loaded successfully.\n");
     return 0;
 }
 
 static void __exit myExitModule(void) {
     usb_deregister(&arduino_driver);
     unregister_chrdev(MYMAJOR, "arduino_driver");
-    printk(KERN_INFO "Arduino USB driver unloaded.\n");
+    printk(KERN_INFO "SO Driver - Arduino USB driver unloaded.\n");
 }
 
 module_init(myInitModule);
